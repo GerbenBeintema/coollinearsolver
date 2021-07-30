@@ -1,83 +1,76 @@
 
-# deepSI
+## coollinearsolver: An easy going linear solver with sparse methods and minimal effort
  
-Dynamical System Identification using python incorporating numerous powerful deep learning methods. (deepSI = deep System Identification)
-
-## Goals of deepSI
-
-The goal of deepSI is to provide a platform for the development and use of (deep) dynamical system identification methods. 
-Furthermore, the deepSI module (i.e. toolbox) is implemented such that anyone can use it without requiring deep expert knowledge in either system identification or machine learning. 
-Lastly, the usage of deepSI is intuitive and often requiring effectively no more than 10 lines of code as seen in the example below. 
-
-## Documentation and Installation
-
-The deepSI Documentation and Installation details are available at [deepsi.readthedocs.io/en/latest](https://deepsi.readthedocs.io/en/latest/). 
-
-## Illustrative Example
+usage:
 
 ```python
-import deepSI
-from matplotlib import pyplot as plt
-train, test = deepSI.datasets.Silverbox() # Automaticly downloaded (and cashed) the Silverbox system data
-                                          # It also splitted the data into two instances of System_data
-plt.plot(train.y) #train.y = measured outputs (and train.u = the system inputs)
-plt.plot(test.y)
-plt.ylabel('y'); plt.xlabel('t'); plt.legend(['train','test']); plt.show()
+from coollinearsolver import Variable, System_of_linear_eqs
+
+T = Variable(name='T')
+print(T.coefs)
+print(T)
+eq1 = T + T + T + T[1]   + 1*T[3.5]==1
+eq2 = T + T     + T[1]   - 4*T[3.5]==4
+eq3 = T         + T[1]/10+ 0*T[3.5]==-10.5
+print(eq1)
+print(eq2)
+print(eq3)
+sys = System_of_linear_eqs()
+sys.push_equation(eq1)
+sys.push_equation(eq2)
+sys.push_equation(eq3) #or use sys.push_equations([eq1,eq2,eq3]) or even `sys = quicksolver([eq1,eq2,eq3])`
+sys.solve() #solve using the pushed equations
+print('T=',sys[T]) #evaluated T on the solution
+print('T[1]=',sys[T[1]])
+print('T[3.5]=',sys[T[3.5]])
+# print('T[2.5]=',sys[T[2.5]]) #this will throw an error for it was not present in the source equations
+print('eq1=',sys[eq1]) #you can also evaluate expressions
 ```
+As can be seen you can use non-integer indexes and the notation is quite simple.
 
-![image](docs/images/silverboxfigure.png)
+### Heat Equation Solving example
+
+It uses a sparse solver so you can used it as a PDE solver such as solving the heat equation
 
 ```python
-#ARX model
-sys_SS_linear = deepSI.fit_systems.Sklearn_io_linear(na=2, nb=5) 
-sys_SS_linear.fit(train) #fit the ARX data 
-test_simulation_SS_linear = sys_SS_linear.apply_experiment(test)
+import numpy as np
+N = 200 #creates and 200**2 by 200**2 sparse matrix
+Ny = Nx = N
+dx, dy = 1/(Nx-1), 1/(Ny-1)
+yar = np.linspace(0,1,num=Ny)
+xar = np.linspace(0,1,num=Nx)
 
-#Encoder method with neural networks (Beintema, et al. 2020a)
-sys_encoder = deepSI.fit_systems.SS_encoder(nx=4, na=10, nb=10) 
-#batch optimization using PyTorch for back propagation. 
-sys_encoder.fit(train, epochs=50, batch_size=256, loss_kwargs={'nf':50}, sim_val=test[:5000]) 
-test_simulation_encoder = sys_encoder.apply_experiment(test)
+eqs = System_of_linear_eqs()
+T = Variable(name='T')
 
-#plotting the residuals
-plt.plot(test.y)
-plt.plot(test.y-test_simulation_SS_linear.y)
-plt.plot(test.y-test_simulation_encoder.y)
-plt.ylabel('y'); plt.xlabel('t'); 
-plt.legend(['Measured','Simulation ARX', 'Simulation SS encoder'])
+for yi in range(Ny):
+    for xi in range(Nx):
+        x,y = xar[xi], yar[yi]
+        if x==0:
+            if 0.25<y<0.75:
+                eqs.push_equation(T[x,y]==1)
+            else:
+                eqs.push_equation(T[x,y]==0)
+        elif y==0 or x==1 or y==1:
+            eqs.push_equation(T[x,y]==0)
+        else:
+            #domain:
+            eqs.push_equation(T[x,y]==0.25*(T[xar[xi+1],y] + T[xar[xi-1],y] + T[x,yar[yi+1]] + T[x,yar[yi-1]]))
+
+print(eqs.get_sparse_matrix().__repr__()) # a sparse matrix is automaticly created
+eqs.solve()
+
+Tar = []
+for yi in range(Ny):
+    Trow = []
+    for xi in range(Nx):
+        x,y = xar[xi], yar[yi]
+        Trow.append(eqs[T[x,y]])
+    Tar.append(Trow)
+from matplotlib import pyplot as plt
+plt.contourf(xar,yar,Tar)
+plt.colorbar()
 plt.show()
 ```
 
-![test set results ARX and SS encoder](docs/images/silverbox_arx_encoder.png)
-
-## Main Features
-
-* Numerous System Identification methods
-    * Linear methods (e.g. ARX, Linear State Space)
-    * Nonlinear methods (e.g. NARX, GP, SVM, Sub-space Encoder)
-    * User defined identification methods 
-* Direct access to most popular system identification datasets and benchmarks (e.g. [nonlinearbenchmarks.org](http://www.nonlinearbenchmark.org/) and [DaISy](https://homes.esat.kuleuven.be/~tokka/daisydata.html))
-* Numerous evaluation and analysis tools (e.g. RMS, NRMS, n-step NRMS)
-* Numerous predefined data generation systems (e.g. openAI gym, Wiener, Lorenz attractor, video output systems)
-* Being able to accommodate user defined data generation system with ease.
-
-## Featured Projects utilizing deepSI
-
-Gerben Beintema, Roland Toth, Maarten Schoukens; Nonlinear State-Space Identification using Deep Encoder Networks; Submitted to l4dc 2021a; [Github Repository](https://github.com/GerbenBeintema/SS-encoder-WH-Silver), [Arxiv](https://arxiv.org/abs/2012.07721)
-
-Gerben Beintema, Roland Toth, Maarten Schoukens; Nonlinear State-space Model Identification from Video Data using Deep Encoders; Submitted to SYSID 2021b; [Github repository](https://github.com/GerbenBeintema/SS-encoder-video), [Arxiv](https://arxiv.org/abs/2012.07721)
-
-## Contributing
-
-deepSI is in ongoing development and anyone can contribute to any part of module.
-
-
-## Contact
-
-Feel free to contact me directly for any question or issues related to deepSI.
-
-Main developer: PhD candidate Gerben Beintema at the TU/e. Control Systems. g.i.beintema@tue.nl
-
-## License
-
-BSD 3-Clause License
+It can be quite slow in constructing the equations but that is not the goal of this module. 
