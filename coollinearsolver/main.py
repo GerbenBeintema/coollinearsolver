@@ -121,6 +121,12 @@ class System_of_linear_eqs(object):
     def __getitem__(self, ids):
         return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
 
+def quicksolve(eqs):
+    sys = System_of_linear_eqs()
+    sys.push_equations(eqs)
+    sys.solve()
+    return sys
+
 if __name__ == '__main__':
     T = Variable(name='T')
     print(T.coefs)
