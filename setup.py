@@ -3,9 +3,10 @@ from setuptools import setup, find_namespace_packages
 with open('requirements.txt') as f:
     install_requires = [line for line in f]
 
-packages = [a for a in find_namespace_packages(where='.') if a[:6]=='coollinearsolver']
-
-setup(name = 'coollinearsolver',
+name = 'coollinearsolver'
+packages = [a for a in find_namespace_packages(where='.') if a[:len(name)]==name]
+print(packages)
+setup(name = name,
       version = '0.1.0',
       description = 'An easy going linear solver with sparse methods and minimal effort',
       author = 'Gerben Beintema',
