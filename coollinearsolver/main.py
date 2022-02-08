@@ -17,7 +17,7 @@ class Linear_equation(object):
             self.coefs = coefs
         else:
             self.coefs = defaultdict(float)
-            for idel,value in coefs: 
+            for idel, value in coefs: 
                 self.coefs[idel] += value
     
     def __add__(self,other):
@@ -88,7 +88,6 @@ class Variable(Linear_equation):
 class System_of_linear_eqs(object):
     def __init__(self):
         self.map = {} #{id,num}
-        self.nvars = 0
         self.neqs = 0
         self.data = []
         self.eqnum = []
@@ -98,8 +97,7 @@ class System_of_linear_eqs(object):
     def push_equation(self,eq):
         for id_now, value in eq.coefs.items():
             if self.map.get(id_now) is None:
-                self.map[id_now] = self.nvars
-                self.nvars += 1
+                self.map[id_now] = len(self.map)#len(self.map)
             self.data.append(value)
             self.eqnum.append(self.neqs)
             self.varnum.append(self.map[id_now])
@@ -111,12 +109,12 @@ class System_of_linear_eqs(object):
             self.push_equation(eq)
             
     def solve(self):
-        assert self.neqs==self.nvars, f'to many or too little number of equations nvars={self.nvars}, neqs={self.neqs}'
+        assert self.neqs==len(self.map), f'too many or too little number of equations nvars={len(self.map)}, neqs={self.neqs}'
         A = self.get_sparse_matrix()
         self.sol = solve(A, self.rhs)
 
     def get_sparse_matrix(self):
-        return csc_matrix(arg1=(self.data, (self.eqnum,self.varnum)),shape=(self.neqs,self.nvars))
+        return csc_matrix(arg1=(self.data, (self.eqnum,self.varnum)),shape=(self.neqs,len(self.map)))
     
     def __getitem__(self, ids):
         return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
@@ -127,7 +125,57 @@ def quicksolve(eqs):
     sys.solve()
     return sys
 
+class Linear_least_sqaures(object):
+    def __init__(self):
+        self.sol_sys = System_of_linear_eqs()
+
+    def push_equation(self, eq):
+        self.sol_sys.push_equation(eq)
+
+    def solve(self):
+        R = self.sol_sys.get_sparse_matrix()
+        s = self.sol_sys.rhs
+        self.sol_sys.sol = solve(R.T@R, R.T@s)
+
+    def __getitem__(self, ids):
+        return self.sol_sys[ids]
+
+
 if __name__ == '__main__':
+    sys = Linear_least_sqaures()
+
+    a = Variable(name='a')
+    b = Variable(name='b')
+    sys.push_equation(a+b)
+    sys.push_equation(a-b)
+    sys.push_equation(a+a+4)
+    sys.solve()
+    print('a',sys[a], 'b',sys[b])
+
+    #https://scaron.info/doc/qpsolvers/least-squares.html#qpsolvers.solve_ls
+
+
+class Constrained_least_squares(object):
+    def __init__(self):
+        self.objective_sys = System_of_linear_eqs()
+        self.inequality_sys = System_of_linear_eqs()
+        self.inequality_sys.map = self.objective_sys.map
+        self.equality_sys = System_of_linear_eqs()
+        self.equality_sys.map = self.objective_sys.map
+
+    def push_objective(self, eq):
+        pass
+
+    def push_equality(self, eq):
+        pass
+
+    def push_inequality(self, eq):
+        pass
+
+
+
+
+if True and __name__ == '__main__':
     T = Variable(name='T')
     print(T.coefs)
     print(T)
