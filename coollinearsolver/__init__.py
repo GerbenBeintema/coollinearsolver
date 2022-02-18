@@ -1,1 +1,0 @@
-from coollinearsolver.main import Variable, Linear_equation, System_of_linear_eqs, quicksolve

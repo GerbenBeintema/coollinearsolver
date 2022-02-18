@@ -1,10 +1,10 @@
 
-## coollinearsolver: An easy going linear solver with sparse methods and minimal effort
+## cool_linear_solver: An easy going linear solver with sparse methods and minimal effort
  
 usage:
 
 ```python
-from coollinearsolver import Variable, System_of_linear_eqs
+from cool_linear_solver import Variable, System_of_linear_eqs
 
 T = Variable(name='T')
 print(T.coefs)
@@ -16,9 +16,9 @@ print(eq1)
 print(eq2)
 print(eq3)
 sys = System_of_linear_eqs()
-sys.push_equation(eq1)
-sys.push_equation(eq2)
-sys.push_equation(eq3) #or use sys.push_equations([eq1,eq2,eq3]) or even `sys = quicksolver([eq1,eq2,eq3])`
+sys.add_equation(eq1)
+sys.add_equation(eq2)
+sys.add_equation(eq3) #or use sys.add_equations([eq1,eq2,eq3]) or even `sys = quicksolver([eq1,eq2,eq3])`
 sys.solve() #solve using the pushed equations
 print('T=',sys[T]) #evaluated T on the solution
 print('T[1]=',sys[T[1]])
@@ -48,14 +48,14 @@ for yi in range(Ny):
         x,y = xar[xi], yar[yi]
         if x==0:
             if 0.25<y<0.75:
-                eqs.push_equation(T[x,y]==1)
+                eqs.add_equation(T[x,y]==1)
             else:
-                eqs.push_equation(T[x,y]==0)
+                eqs.add_equation(T[x,y]==0)
         elif y==0 or x==1 or y==1:
-            eqs.push_equation(T[x,y]==0)
+            eqs.add_equation(T[x,y]==0)
         else:
             #domain:
-            eqs.push_equation(T[x,y]==0.25*(T[xar[xi+1],y] + T[xar[xi-1],y] + T[x,yar[yi+1]] + T[x,yar[yi-1]]))
+            eqs.add_equation(T[x,y]==0.25*(T[xar[xi+1],y] + T[xar[xi-1],y] + T[x,yar[yi+1]] + T[x,yar[yi-1]]))
 
 print(eqs.get_sparse_matrix().__repr__()) # a sparse matrix is automaticly created
 eqs.solve()
