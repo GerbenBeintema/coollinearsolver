@@ -1,3 +1,4 @@
-/development/
-/cool_linear_solver.egg-info/
+development/
+cool_linear_solver.egg-info/
 __pycache__/
+dist/

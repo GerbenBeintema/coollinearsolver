@@ -1,5 +1,5 @@
 
-## cool_linear_solver: An easy going linear solver with sparse methods and minimal effort
+## cool_linear_solver: An easy going (contrained) linear solver with sparse methods and minimal effort
  
 usage:
 
