@@ -18,7 +18,7 @@ class System_of_linear_eqs(object):
     def add_equation(self,eq):
         for id_now, value in eq.coefs.items():
             if self.map.get(id_now) is None:
-                self.map[id_now] = len(self.map)#len(self.map)
+                self.map[id_now] = len(self.map)
             self.data.append(value)
             self.eqnum.append(len(self.rhs))
             self.varnum.append(self.map[id_now])
