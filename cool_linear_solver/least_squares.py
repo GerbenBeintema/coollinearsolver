@@ -3,6 +3,8 @@ from cool_linear_solver.linear_solver import System_of_linear_eqs
 import numpy as np
 from scipy.sparse.linalg import spsolve as solve
 
+import gym
+
 #https://scaron.info/doc/qpsolvers/least-squares.html#qpsolvers.solve_ls
 class Constrained_least_squares(object):
     def __init__(self):
@@ -25,8 +27,8 @@ class Constrained_least_squares(object):
         assert eq.is_inequality
         self.inequality_sys.add_equation(eq)
 
-    def solve(self, toarray=True, solver='quadprog', verbose=False):
-        #min (R x - s)
+    def solve(self, toarray=True, solver='quadprog', verbose=False, W=None, lb=None, ub=None):
+        #min 1/2 |(R x - s)|^2_W
         # st G x <= h
         #    A x = b
         from qpsolvers import solve_qp, solve_ls
@@ -58,7 +60,7 @@ class Constrained_least_squares(object):
 
         self.sol = \
             solve_ls(R, s, G=G, h=h, A=A, b=b, \
-                lb=None, ub=None, W=None, solver=solver, initvals=None, sym_proj=False, verbose=False)
+                lb=lb, ub=ub, W=W, solver=solver, initvals=None, sym_proj=False, verbose=False)
         assert self.sol is not None, 'optimization failed'
 
     def __getitem__(self, ids):

@@ -50,7 +50,8 @@ class Linear_equation(object):
         return S
         
     def __mul__(self,other):
-        return Linear_equation(coefs=defaultdict(float, [(id_now,other*value) for id_now, value in self.coefs.items()]),constant=other*self.constant)
+        return Linear_equation(coefs=defaultdict(float, [(id_now,other*value) for id_now, value in self.coefs.items()]),\
+            constant=other*self.constant)
     def __rmul__(self,other): #other*self
         return self*other
     def __truediv__(self,other):
@@ -91,6 +92,7 @@ class Variable(Linear_equation):
         self.constant = 0.
     
     def __getitem__(self, x):
+        # h = hash(x)
         if isinstance(x,tuple):
             h = self.id_base + hash(tuple(int((xi+eps_hash/2)/eps_hash) for xi in x))
             if global_back_hash.get(h)==None:
