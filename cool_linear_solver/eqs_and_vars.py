@@ -9,16 +9,17 @@ n_unnamed_vars = 0
 
 class Linear_equation(object):
     def __init__(self, coefs=[], constant=0, is_inequality=False, valued=False):
-        #coefs (ids, value)
+        #coefs is a defaultdict of {id:value}
         self.valued = valued
         self.constant = constant
         self.is_inequality = is_inequality
-        if isinstance(coefs,defaultdict):
-            self.coefs = coefs
+        if isinstance(coefs,(defaultdict,dict)):
+            self.coefs = defaultdict(float, {idel:value for idel, value in coefs.items() if value!=0})
         else:
             self.coefs = defaultdict(float)
             for idel, value in coefs: 
-                self.coefs[idel] += value
+                if value!=0:
+                    self.coefs[idel] += value
     
     def __add__(self,other):#self + other
         if isinstance(other,Linear_equation):
