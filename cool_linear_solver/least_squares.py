@@ -27,7 +27,7 @@ class Constrained_least_squares(object):
         assert eq.is_inequality
         self.inequality_sys.add_equation(eq)
 
-    def solve(self, toarray=True, solver='quadprog', verbose=False, W=None, lb=None, ub=None):
+    def solve(self, toarray=False, solver='quadprog', verbose=False, W=None, lb=None, ub=None):
         #min 1/2 |(R x - s)|^2_W
         # st G x <= h
         #    A x = b
