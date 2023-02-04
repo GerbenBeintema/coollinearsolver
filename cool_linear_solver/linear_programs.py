@@ -60,7 +60,11 @@ class Linear_program:
         assert self.sol is not None, 'optimization failed'
 
     def __getitem__(self, ids):
-        return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        from collections.abc import Iterable 
+        if  isinstance(ids, Iterable):
+            return [self[id] for id in ids]
+        else:
+            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
 
 if __name__=='__main__':
     from cool_linear_solver.eqs_and_vars import Variable

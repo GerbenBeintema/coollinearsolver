@@ -77,4 +77,8 @@ class Quadratic_problem(object):
         self.sol = solve_qp(P,q,G,h,A,b,lb=lb,ub=ub,solver=solver, initvals=None, sym_proj=False, verbose=False) #add initial vals?
 
     def __getitem__(self, ids):
-        return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        from collections.abc import Iterable 
+        if  isinstance(ids, Iterable):
+            return [self[id] for id in ids]
+        else:
+            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant

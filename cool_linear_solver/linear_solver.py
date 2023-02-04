@@ -42,7 +42,11 @@ class System_of_linear_eqs(object):
         return csc_matrix(arg1=(self.data, (self.eqnum,self.varnum)),shape=(len(self.rhs),len(self.map)))
     
     def __getitem__(self, ids):
-        return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        from collections.abc import Iterable 
+        if  isinstance(ids, Iterable):
+            return [self[id] for id in ids]
+        else:
+            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
 
 if __name__=='__main__':
     from cool_linear_solver import Variable

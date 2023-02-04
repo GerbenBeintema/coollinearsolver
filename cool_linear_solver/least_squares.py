@@ -1,9 +1,6 @@
 
 from cool_linear_solver.linear_solver import System_of_linear_eqs
 import numpy as np
-from scipy.sparse.linalg import spsolve as solve
-
-import gym
 
 #https://scaron.info/doc/qpsolvers/least-squares.html#qpsolvers.solve_ls
 class Constrained_least_squares(object):
@@ -27,7 +24,7 @@ class Constrained_least_squares(object):
         assert eq.is_inequality
         self.inequality_sys.add_equation(eq)
 
-    def solve(self, toarray=False, solver='quadprog', verbose=False, W=None, lb=None, ub=None):
+    def solve(self, toarray=False, solver='osqp', verbose=False, W=None, lb=None, ub=None):
         #min 1/2 |(R x - s)|^2_W
         # st G x <= h
         #    A x = b
@@ -57,14 +54,18 @@ class Constrained_least_squares(object):
             print('h',h)
             print('A',A)
             print('b',b)
-
         self.sol = \
             solve_ls(R, s, G=G, h=h, A=A, b=b, \
                 lb=lb, ub=ub, W=W, solver=solver, initvals=None, sym_proj=False, verbose=False)
+        print('hi5')
         assert self.sol is not None, 'optimization failed'
 
     def __getitem__(self, ids):
-        return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        from collections.abc import Iterable 
+        if  isinstance(ids, Iterable):
+            return [self[id] for id in ids]
+        else:
+            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
 
 class Least_squares(object):
     def __init__(self):
@@ -76,6 +77,7 @@ class Least_squares(object):
     def solve(self):
         R = self.sol_sys.get_sparse_matrix()
         s = self.sol_sys.rhs
+        from scipy.sparse.linalg import spsolve as solve
         self.sol_sys.sol = solve(R.T@R, R.T@s)
 
     def __getitem__(self, ids):

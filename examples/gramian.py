@@ -36,6 +36,7 @@ sys.solve() #solve
 
 M = sys.get_sparse_matrix() #look at sparse matrix
 print('M:',M.__repr__(),'sparse matrix has been created')
+print(f'Fullness: {M.nnz/(M.shape[0]*M.shape[1]):.5%}') # a sparse matrix is automaticly created
 
 P = np.array([[sys[p[i,j] if j<=i else p[j,i]] for j in range(N)] for i in range(N)]) #extract solution from solution
 

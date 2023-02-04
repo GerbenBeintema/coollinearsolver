@@ -1,5 +1,5 @@
 
-from cool_linear_solver import Variable, System_of_linear_eqs
+from cool_linear_solver import Variable, quick_solve
 
 T = Variable(name='T')
 
@@ -12,7 +12,7 @@ xar = np.linspace(-1,1,num=Nx)
 dx, dy = xar[1]-xar[0], yar[1]-yar[0]
 dxh, dyh = dx/2, dy/2
 
-eqs = System_of_linear_eqs()
+eqs = []
 T = Variable(name='T')
 
 #Variable(name='Fx')
@@ -31,23 +31,19 @@ for yi in range(Ny):
         x,y = xar[xi], yar[yi]
         if y==0: 
             if x<=0:
-                eqs.add_equation(T[x,y]==1+np.tanh(10*(2*x+1)))
+                eqs.append(T[x,y]==1+np.tanh(10*(2*x+1)))
             else:
-                eqs.add_equation(T[x,y]==T[x,y+dy])
+                eqs.append(T[x,y]==T[x,y+dy])
         elif y==1 or x==-1 or x==1:
-            eqs.add_equation(T[x,y]==1-np.tanh(10))
+            eqs.append(T[x,y]==1-np.tanh(10))
         else: #domain:
-            eqs.add_equation(Fx(x+dxh, y) + Fy(x, y+dyh) - Fx(x-dxh, y) - Fy(x, y-dyh)==0)
+            eqs.append(Fx(x+dxh, y) + Fy(x, y+dyh) - Fx(x-dxh, y) - Fy(x, y-dyh)==0)
         
-eqs.solve()
+sol = quick_solve(eqs)
 
-Tar = []
-for yi in range(Ny):
-    Trow = []
-    for xi in range(Nx):
-        x,y = xar[xi], yar[yi]
-        Trow.append(eqs[T[x,y]])
-    Tar.append(Trow)
+Tar = [[T[x,y] for x in xar] for y in yar] #setup array 
+Tar = np.array(sol[Tar]) #evaluate 
+
 from matplotlib import pyplot as plt
 plt.figure(figsize=(12,5.5))
 plt.contourf(xar,yar,Tar, levels=np.linspace(0-1e-2,2,11))

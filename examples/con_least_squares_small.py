@@ -13,5 +13,5 @@ sys.add_inequality(b<=1.5)
 # sys.add_inequality(b<=0)
 sys.add_equality(b+2*a==-1)
 
-sys.solve(verbose=2)
+sys.solve(verbose=1, toarray=True)
 print('a',sys[a], 'b',sys[b])
