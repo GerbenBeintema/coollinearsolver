@@ -6,7 +6,7 @@ T = Variable(name='T')
 
 #it uses a space solver so you can used it as a PDE solver such as solving the heat equation
 import numpy as np
-N = 200 #creates and 200**2 by2400**2 sparse matrix
+N = 200 #creates and 200**2 by 200**2 sparse matrix
 Ny = Nx = N
 dx, dy = 1/(Nx-1), 1/(Ny-1)
 yar = np.linspace(0,1,num=Ny)

@@ -1,14 +1,20 @@
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
-build-backend = "setuptools.build_meta"
 
-[project]
-dependencies = [
-    "scipy",
-    "numpy",
-    "matplotlib",
-    "qpsolvers",
-]
+[tool.poetry]
+name = "cool_linear_solver"
+version = "0.1.7"
+description = "An easy going (contrained) linear solver with sparse methods and minimal effort"
+authors = ["Gerben I. Beintema"]
+license = "BSD 3-Clause License"
+readme = "README.md"
+packages = [{include = "cool_linear_solver"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = ">=1.25"
+matplotlib = "*"
+cloudpickle = "*"
+qpsolvers = {version = "*", extras = ["osqp"]}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

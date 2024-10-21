@@ -51,9 +51,9 @@ class Quadratic_problem(object):
         for h, value in self.quad.linear.coefs.items():
             q[self.map[h]] = value
         G = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs>0 else None
-        h = np.array(self.inequality_sys.rhs, dtype=np.float)                 if self.inequality_sys.neqs>0 else None
+        h = np.array(self.inequality_sys.rhs, dtype=np.float32)                 if self.inequality_sys.neqs>0 else None
         A = self.equality_sys.get_sparse_matrix()   if self.equality_sys.neqs>0   else None
-        b = np.array(self.equality_sys.rhs, dtype=np.float)                   if self.equality_sys.neqs>0   else None
+        b = np.array(self.equality_sys.rhs, dtype=np.float32)                   if self.equality_sys.neqs>0   else None
         if toarray:
             P = P.toarray()
             G = G if G is None else G.toarray()

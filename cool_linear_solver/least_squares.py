@@ -28,25 +28,25 @@ class Constrained_least_squares(object):
         #min 1/2 |(R x - s)|^2_W
         # st G x <= h
         #    A x = b
-        from qpsolvers import solve_qp, solve_ls
+        from qpsolvers import solve_ls
         R = self.objective_sys.get_sparse_matrix()
-        s = np.array(self.objective_sys.rhs, dtype=np.float)
+        s = np.array(self.objective_sys.rhs, dtype=np.float32)
         G = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs>0 else None
-        h = np.array(self.inequality_sys.rhs, dtype=np.float)                 if self.inequality_sys.neqs>0 else None
+        h = np.array(self.inequality_sys.rhs, dtype=np.float32)                 if self.inequality_sys.neqs>0 else None
         A = self.equality_sys.get_sparse_matrix()   if self.equality_sys.neqs>0   else None
-        b = np.array(self.equality_sys.rhs, dtype=np.float)                   if self.equality_sys.neqs>0   else None
+        b = np.array(self.equality_sys.rhs, dtype=np.float32)                   if self.equality_sys.neqs>0   else None
         if toarray:
             R = R.toarray()
             G = G if G is None else G.toarray()
             A = A if A is None else A.toarray()
         if verbose==1:
             prt = lambda x: None if x is None else x.shape
-            print('R',R.__repr__())
-            print('s',prt(s))
-            print('G',G.__repr__())
-            print('h',prt(h))
-            print('A',A.__repr__())
-            print('b',prt(b))
+            print('R',R.__repr__(), type(R))
+            print('s',prt(s), type(s))
+            print('G',G.__repr__(), type(G))
+            print('h',prt(h), type(h))
+            print('A',A.__repr__(), type(A))
+            print('b',prt(b), type(b))
         elif verbose==2:
             print('R',R)
             print('s',s)
@@ -56,7 +56,7 @@ class Constrained_least_squares(object):
             print('b',b)
         self.sol = \
             solve_ls(R, s, G=G, h=h, A=A, b=b, \
-                lb=lb, ub=ub, W=W, solver=solver, initvals=None, sym_proj=False, verbose=False)
+                lb=lb, ub=ub, W=W, solver=solver, initvals=None, verbose=False)
         print('hi5')
         assert self.sol is not None, 'optimization failed'
 
