@@ -47,9 +47,9 @@ print('eq1=',sol[eq1]) #you can also evaluate expressions
 
 As can be seen you can use non-integer indexes and the notation is quite simple.
 
-### 1.2 Heat Equation Solving example
+### 1.2 Fluid advection example
 
-It uses a sparse solver so you can used it as a PDE solver such as solving the heat equation
+It uses a sparse solver so you can used it as a PDE solver such as solving the advection equation
 
 ```python
 from cool_linear_solver import Variable, quick_solve

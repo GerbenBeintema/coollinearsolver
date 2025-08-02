@@ -3,3 +3,4 @@ from cool_linear_solver.least_squares import Least_squares, Constrained_least_sq
 from cool_linear_solver.linear_solver import System_of_linear_eqs
 from cool_linear_solver.quadratic_problems import Quadratic_problem
 from cool_linear_solver.quicksolve import quick_solve
+from cool_linear_solver.linear_programs import Linear_program

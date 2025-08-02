@@ -57,7 +57,6 @@ class Constrained_least_squares(object):
         self.sol = \
             solve_ls(R, s, G=G, h=h, A=A, b=b, \
                 lb=lb, ub=ub, W=W, solver=solver, initvals=None, verbose=False)
-        print('hi5')
         assert self.sol is not None, 'optimization failed'
 
     def __getitem__(self, ids):
