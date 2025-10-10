@@ -28,51 +28,58 @@ class Constrained_least_squares(object):
         #min 1/2 |(R x - s)|^2_W
         # st G x <= h
         #    A x = b
-        from qpsolvers import solve_ls
-        R = self.objective_sys.get_sparse_matrix()
-        # use float64 to match scipy/osqp/qpsolvers expectations when using sparse matrices
-        s = np.array(self.objective_sys.rhs, dtype=np.float64)
-        G = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs>0 else None
-        h = np.array(self.inequality_sys.rhs, dtype=np.float64)                 if self.inequality_sys.neqs>0 else None
-        A = self.equality_sys.get_sparse_matrix()   if self.equality_sys.neqs>0   else None
-        b = np.array(self.equality_sys.rhs, dtype=np.float64)                   if self.equality_sys.neqs>0   else None
-        if toarray:
-            R = R.toarray()
-            G = G if G is None else G.toarray()
-            A = A if A is None else A.toarray()
-        if verbose==1:
-            prt = lambda x: None if x is None else x.shape
-            print('R',R.__repr__(), type(R))
-            print('s',prt(s), type(s))
-            print('G',G.__repr__(), type(G))
-            print('h',prt(h), type(h))
-            print('A',A.__repr__(), type(A))
-            print('b',prt(b), type(b))
-        elif verbose==2:
-            print('R',R)
-            print('s',s)
-            print('G',G)
-            print('h',h)
-            print('A',A)
-            print('b',b)
-        # Convert the least-squares problem to a quadratic form:
-        # min ||R x - s||^2  <=>  min 1/2 x^T P x + q^T x
-        # where P = 2 * R.T @ R, q = -2 * R.T @ s
         from qpsolvers import solve_qp
-        from scipy.sparse import csc_matrix
+        from scipy.sparse import csc_matrix, issparse
+        import numpy as _np
 
+        R = self.objective_sys.get_sparse_matrix()
+        s = _np.array(self.objective_sys.rhs, dtype=_np.float64)
+        G = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs > 0 else None
+        h = None if G is None else _np.array(self.inequality_sys.rhs, dtype=_np.float64)
+        A = self.equality_sys.get_sparse_matrix() if self.equality_sys.neqs > 0 else None
+        b = None if A is None else _np.array(self.equality_sys.rhs, dtype=_np.float64)
+
+        if toarray:
+            # allow user to inspect dense intermediates, but we'll still pass CSC to the solver
+            R = R.toarray()
+            G = None if G is None else (G.toarray() if hasattr(G, 'toarray') else G)
+            A = None if A is None else (A.toarray() if hasattr(A, 'toarray') else A)
+
+        if verbose:
+            prt = (lambda x: None if x is None else getattr(x, 'shape', None))
+            if verbose == 2:
+                print('R', R)
+                print('s', s)
+                print('G', G)
+                print('h', h)
+                print('A', A)
+                print('b', b)
+            else:
+                print('R', getattr(R, '__repr__', lambda: None)(), type(R))
+                print('s', prt(s), type(s))
+                print('G', getattr(G, '__repr__', lambda: None)(), type(G))
+                print('h', prt(h), type(h))
+                print('A', getattr(A, '__repr__', lambda: None)(), type(A))
+                print('b', prt(b), type(b))
+
+        # Convert least-squares to quadratic form: P = 2 R.T R, q = -2 R.T s
         P = (R.T @ R) * 2
-        # ensure sparse csc format for P if it's sparse
-        if hasattr(P, 'tocsc'):
-            P = csc_matrix(P)
         q = -2 * (R.T @ s)
 
-        if toarray:
-            P = P.toarray() if hasattr(P, 'toarray') else P
-            G = G if G is None else (G.toarray() if hasattr(G, 'toarray') else G)
-            A = A if A is None else (A.toarray() if hasattr(A, 'toarray') else A)
+        # coerce vectors and sparse matrices to solver-friendly types
+        q = _np.asarray(q, dtype=_np.float64)
+        h = None if h is None else _np.asarray(h, dtype=_np.float64)
+        b = None if b is None else _np.asarray(b, dtype=_np.float64)
 
-        # call solve_qp directly with sparse P to avoid unnecessary conversions
+        def _as_csc(M):
+            if M is None:
+                return None
+            return M.tocsc() if issparse(M) else csc_matrix(M)
+
+        P = _as_csc(P)
+        G = _as_csc(G)
+        A = _as_csc(A)
+
         self.sol = solve_qp(P, q, G, h, A, b, lb=lb, ub=ub, solver=solver, initvals=None, verbose=False)
         assert self.sol is not None, 'optimization failed'
 

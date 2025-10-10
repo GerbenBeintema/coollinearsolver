@@ -58,36 +58,52 @@ def quick_solve(list_of_eqs, **solver_kwargs):
     else:
         raise ValueError(f'Cannot find solver for len(Q_exp)={len(Q_exp)}, len(L_ieq)={len(L_ieq)}, len(L_exp)={len(L_exp)}, len(L_eq)=={len(L_eq)}')
 
-if __name__=='__main__':
+def _test_quicksolve(verbose=1):
     x = Variable('x')
-
     eqs = [x[0] + x[1] + 2*x[2] == 1,
             3*x[0] + x[1] + 0.5*x[2] == 2,
             x[0] + 2*x[1] + 0 == 3]
     sys = quick_solve(eqs)
-    print('Least system of equations:')
-    print(sys, sys[x[0], x[1], x[2]], sys[eqs])
+    if verbose:
+        print('\n=== Least system of equations ===')
+        print(f'solver: {type(sys).__name__}')
+        print('variables:', [x[0], x[1], x[2]])
+        print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
+        print('equation evaluations:', [sys[e] for e in eqs])
 
     eqs = [x[0] + x[1] + 2*x[2]+2,
             3*x[0] + x[1] + 0.5*x[2]+2,
             x[0] + 2*x[1] + 0+4, 
             x[1] + x[2]+4]
     sys = quick_solve(eqs)
-    print('Least Squares:')
-    print(sys, sys[x[0], x[1], x[2]], sys[eqs])
+    if verbose:
+        print('\n=== Least Squares ===')
+        print(f'solver: {type(sys).__name__}')
+        print('variables:', [x[0], x[1], x[2]])
+        print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
+        print('equation residuals:', [sys[e] for e in eqs])
     
+    for toarray in (True, False):
+        print(f'\n--- toarray={toarray} ---')
+        eqs = [x[0] + x[1] + 2*x[2]+2,
+                3*x[0] + x[1] + 0.5*x[2]+2,
+                x[0] + 2*x[1] + 0+4, 
+                x[1] + x[2]+9==2]
+        sys = quick_solve(eqs, toarray=toarray) #I'm getting a Segmentation fault if using solver='osqp' and toarray=False
+        if verbose:
+            print('\n=== Constrained Least Squares ===')
+            print(f'solver: {type(sys).__name__}')
+            print('variables:', [x[0], x[1], x[2]])
+            print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
+            print('equation evaluations:', [sys[e] for e in eqs])
 
-    eqs = [x[0] + x[1] + 2*x[2]+2,
-            3*x[0] + x[1] + 0.5*x[2]+2,
-            x[0] + 2*x[1] + 0+4, 
-            x[1] + x[2]+9==2]
-    sys = quick_solve(eqs, toarray=True) #I'm getting a Segmentation fault if using solver='osqp' and toarray=False
-    print('Constrained Least Squares:')
-    print(sys, sys[x[0], x[1], x[2]], sys[eqs])
+        eqs = [x[0]*x[0]+x[1]*x[1]+x[2]*x[2]+x[1]+x[2], x[0]+x[1]+x[2]==1]
+        sys = quick_solve(eqs, toarray=toarray)
+        if verbose:
+            print('\n=== Quadratic problem ===')
+            print(f'solver: {type(sys).__name__}')
+            print('variables:', [x[0], x[1], x[2]])
+            print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
 
-    eqs = [x[0]*x[0]+x[1]*x[1]+x[2]*x[2]+x[1]+x[2]]
-    sys = quick_solve(eqs)
-    print('Quadratic problem:')
-    print(sys, sys[x[0], x[1], x[2]])
-
-
+if __name__=='__main__':
+    _test_quicksolve()
