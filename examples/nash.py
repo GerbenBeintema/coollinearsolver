@@ -3,13 +3,18 @@ import numpy as np
 from cool_linear_solver import Variable, quick_solve, Linear_equation, Least_squares, System_of_linear_eqs, Quadratic_problem, Linear_program
 
 
+# M = np.array([
+#     [0, -1, 1],
+#     [1, 0, -1],
+#     [-1, 1, 0]
+# ])
 M = np.array([
-    [0, -1, 1],
-    [1, 0, -1],
-    [-1, 1, 0]
+    [1, -1],
+    [-2, 2]
 ])
 
-p2_list = [[1, 0, 0]]
+
+p2_list = np.eye(M.shape[0])
 
 def f(p1, p2):
     p1 = np.array(p1)
@@ -18,23 +23,19 @@ def f(p1, p2):
 
 V = Variable
 lamb = V('lamb')
-p1_R = V('p1_R')
-p1_P = V('p1_P')
-p1_S = V('p1_S')
-p1 = [p1_R, p1_P, p1_S]
+p1 = V('p1')
+p1 = [p1[i] for i in range(M.shape[0])]
 
 sys = Linear_program()
 
-for p2 in p2_list:
-    sys.add_inequality(f(p1,p2) >= lamb)
+sys.set_maximization_objective(lamb)
+sys.add_equations([f(p1,p2) >= lamb for p2 in p2_list])
+sys.add_equations(sum(p1) == 1)
+sys.add_equations([p1_i >= 0 for p1_i in p1])
 
-sys.add_equality(p1_R + p1_P + p1_S == 1)
-sys.set_objective(lamb)
-
-sys.solve(toarray=False, verbose=0, bounds=(0,1))
+sys.solve(toarray=False, verbose=0)
 
 print(sys)
-print('p1_R:', sys[p1_R])
-print('p1_P:', sys[p1_P])
-print('p1_S:', sys[p1_S])
+for p1_i in p1:
+    print(f'{p1_i} = {sys[p1_i]}')
 print('lamb:', sys[lamb])

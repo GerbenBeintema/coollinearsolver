@@ -30,11 +30,12 @@ class Constrained_least_squares(object):
         #    A x = b
         from qpsolvers import solve_ls
         R = self.objective_sys.get_sparse_matrix()
-        s = np.array(self.objective_sys.rhs, dtype=np.float32)
+        # use float64 to match scipy/osqp/qpsolvers expectations when using sparse matrices
+        s = np.array(self.objective_sys.rhs, dtype=np.float64)
         G = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs>0 else None
-        h = np.array(self.inequality_sys.rhs, dtype=np.float32)                 if self.inequality_sys.neqs>0 else None
+        h = np.array(self.inequality_sys.rhs, dtype=np.float64)                 if self.inequality_sys.neqs>0 else None
         A = self.equality_sys.get_sparse_matrix()   if self.equality_sys.neqs>0   else None
-        b = np.array(self.equality_sys.rhs, dtype=np.float32)                   if self.equality_sys.neqs>0   else None
+        b = np.array(self.equality_sys.rhs, dtype=np.float64)                   if self.equality_sys.neqs>0   else None
         if toarray:
             R = R.toarray()
             G = G if G is None else G.toarray()

@@ -7,10 +7,10 @@ from cool_linear_solver.linear_solver import System_of_linear_eqs
 
 def quick_solve(list_of_eqs, **solver_kwargs):
     assert len(list_of_eqs)>0
-    Q_exp = []
-    L_exp = []
-    L_ieq = []
-    L_eq = []
+    Q_exp = [] # Quadratic expressions
+    L_exp = [] # Linear expressions
+    L_ieq = [] # Linear inequalities
+    L_eq = []  # Linear equalities
     for eq in list_of_eqs:
         if isinstance(eq, Quadratic_equation):
             Q_exp.append(eq)

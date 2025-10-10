@@ -35,7 +35,17 @@ class Quadratic_problem(object):
     def add_inequality(self, eq):
         assert eq.is_inequality
         self.inequality_sys.add_equation(eq)
-
+    
+    def add_equations(self, eq):
+        eqs = [eq] if not isinstance(eq, list) else eq
+        for eq in eqs:
+            if eq.is_inequality:
+                self.add_inequality(eq)
+            elif eq.is_equality:
+                self.add_equality(eq)
+            else:
+                self.set_objective(eq)
+    
     def get_sparse_matrix(self):
         from scipy.sparse import coo_matrix, csc_matrix
         return csc_matrix(arg1=self._quaddata, shape=[len(self.map),len(self.map)])
@@ -74,7 +84,7 @@ class Quadratic_problem(object):
             print('A',A)
             print('b',b)
 
-        self.sol = solve_qp(P,q,G,h,A,b,lb=lb,ub=ub,solver=solver, initvals=None, sym_proj=False, verbose=False) #add initial vals?
+        self.sol = solve_qp(P,q,G,h,A,b,lb=lb,ub=ub,solver=solver, initvals=None, verbose=False) #add initial vals?
 
     def __getitem__(self, ids):
         from collections.abc import Iterable 
