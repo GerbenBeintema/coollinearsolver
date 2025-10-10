@@ -34,3 +34,10 @@ def test_example_runs(modname):
         pytest.skip(f'missing data file for example {modname}: {e}')
         return
     assert res is not None
+
+
+def test_quicksolve_runs():
+    """Run the internal quicksolve smoke test (_test_quicksolve) to ensure it executes."""
+    from cool_linear_solver import quicksolve
+    # _test_quicksolve prints by default; run with verbose=0 to keep test output quiet
+    quicksolve._test_quicksolve(verbose=0)
