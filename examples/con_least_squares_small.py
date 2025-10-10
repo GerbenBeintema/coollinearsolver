@@ -15,7 +15,8 @@ def run_example(verbose=1):
 	# sys.add_inequality(b<=0)
 	sys.add_equality(b+2*a==-1)
 
-	sys.solve(verbose=2, toarray=True)
+	# prefer sparse path to avoid qpsolvers converting dense arrays back to sparse
+	sys.solve(verbose=2, toarray=False)
 	if verbose:
 		print('a',sys[a], 'b',sys[b])
 	return sys

@@ -57,13 +57,13 @@ class Quadratic_problem(object):
         #    lb <= u <= ub
         from qpsolvers import solve_qp
         P = self.get_sparse_matrix()*2
-        q = np.zeros((len(self.map)))
-        for h, value in self.quad.linear.coefs.items():
-            q[self.map[h]] = value
+        q = np.zeros((len(self.map)), dtype=np.float64)
+        for hid, value in self.quad.linear.coefs.items():
+            q[self.map[hid]] = value
         G = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs>0 else None
-        h = np.array(self.inequality_sys.rhs, dtype=np.float32)                 if self.inequality_sys.neqs>0 else None
+        h = np.array(self.inequality_sys.rhs, dtype=np.float64)                 if self.inequality_sys.neqs>0 else None
         A = self.equality_sys.get_sparse_matrix()   if self.equality_sys.neqs>0   else None
-        b = np.array(self.equality_sys.rhs, dtype=np.float32)                   if self.equality_sys.neqs>0   else None
+        b = np.array(self.equality_sys.rhs, dtype=np.float64)                   if self.equality_sys.neqs>0   else None
         if toarray:
             P = P.toarray()
             G = G if G is None else G.toarray()

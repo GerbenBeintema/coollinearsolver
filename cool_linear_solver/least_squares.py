@@ -55,9 +55,25 @@ class Constrained_least_squares(object):
             print('h',h)
             print('A',A)
             print('b',b)
-        self.sol = \
-            solve_ls(R, s, G=G, h=h, A=A, b=b, \
-                lb=lb, ub=ub, W=W, solver=solver, initvals=None, verbose=False)
+        # Convert the least-squares problem to a quadratic form:
+        # min ||R x - s||^2  <=>  min 1/2 x^T P x + q^T x
+        # where P = 2 * R.T @ R, q = -2 * R.T @ s
+        from qpsolvers import solve_qp
+        from scipy.sparse import csc_matrix
+
+        P = (R.T @ R) * 2
+        # ensure sparse csc format for P if it's sparse
+        if hasattr(P, 'tocsc'):
+            P = csc_matrix(P)
+        q = -2 * (R.T @ s)
+
+        if toarray:
+            P = P.toarray() if hasattr(P, 'toarray') else P
+            G = G if G is None else (G.toarray() if hasattr(G, 'toarray') else G)
+            A = A if A is None else (A.toarray() if hasattr(A, 'toarray') else A)
+
+        # call solve_qp directly with sparse P to avoid unnecessary conversions
+        self.sol = solve_qp(P, q, G, h, A, b, lb=lb, ub=ub, solver=solver, initvals=None, verbose=False)
         assert self.sol is not None, 'optimization failed'
 
     def __getitem__(self, ids):
