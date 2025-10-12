@@ -58,6 +58,21 @@ def quick_solve(list_of_eqs, **solver_kwargs):
     else:
         raise ValueError(f'Cannot find solver for len(Q_exp)={len(Q_exp)}, len(L_ieq)={len(L_ieq)}, len(L_exp)={len(L_exp)}, len(L_eq)=={len(L_eq)}')
 
+def _validate_quicksolve(sol, eqs, epsilon=1e-6):
+    for eq in eqs:
+        if isinstance(eq, Linear_equation):
+            res = sol[eq]
+            if eq.is_equality:
+                assert abs(res)<epsilon, f'Equality {eq} not satisfied, residual={res}'
+            elif eq.is_inequality:
+                assert res<=epsilon, f'Inequality {eq} not satisfied, residual={res}'
+            else:
+                pass #objective
+        elif isinstance(eq, Quadratic_equation):
+            pass #objective
+        else:
+            raise ValueError(f'{eq} is not an Quadratic or Linear equation')
+
 def _test_quicksolve(verbose=1):
     x = Variable('x')
     eqs = [x[0] + x[1] + 2*x[2] == 1,

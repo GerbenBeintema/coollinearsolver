@@ -178,15 +178,41 @@ class Variable(Linear_equation):
         self.constant = 0.
 
     def __getitem__(self, x):
-        # h = hash(x)
-        if isinstance(x,tuple):
-            h = self.id_base + hash(tuple(int((xi+eps_hash/2)/eps_hash) for xi in x))
+        key = _index_to_key(x)
+        h = self.id_base + hash(key)
+        if global_back_hash.get(h) is None:
+            global_back_hash[h] = f'{self.name}[{x}]'.replace('(', '').replace(')', '')
+        return Linear_equation(coefs=[(h, 1.)], constant=0.)
+
+
+def _index_to_key(x):
+    """Convert an indexing value x into an internal hashable key.
+
+    Rules:
+    - Real numbers are bucketed via int((x + eps_hash/2)/eps_hash).
+    - Tuples are converted elementwise: Real elements are bucketed, other
+      elements must be hashable and are kept as-is.
+    - Other objects must be hashable and are used directly.
+
+    Raises TypeError for unhashable inputs.
+    """
+    try:
+        if isinstance(x, tuple):
+            new_key = []
+            for xi in x:
+                if isinstance(xi, Real):
+                    new_key.append(int((xi + eps_hash/2) / eps_hash))
+                else:
+                    hash(xi)
+                    new_key.append(xi)
+            return tuple(new_key)
+        elif isinstance(x, Real):
+            return int((x + eps_hash/2) / eps_hash)
         else:
-            h = self.id_base + hash(int((x+eps_hash/2)/eps_hash))
-        
-        if global_back_hash.get(h)==None:
-            global_back_hash[h] = f'{self.name}[{x}]'.replace('(','').replace(')','')
-        return Linear_equation(coefs=[(h,1.)], constant=0.)
+            hash(x)
+            return x
+    except TypeError:
+        raise TypeError(f'Index {x!r} is not hashable and cannot be used for Variable indexing')
 
 
 
@@ -223,22 +249,27 @@ if __name__=='__main__':
     x = Variable('x')
     eq = x[1]+x[2]+2
     print(eq)
-    eqquad = eq*eq
-    print(eqquad)
+    eq = x['a'] + x['b']
+    print(eq)
+    eq = x['a', 1] + x['b', 2.5]
+    print(eq)
 
-    eq1 = x[1] + 2
-    eq2 = x[2] - 2
+    # eqquad = eq*eq
+    # print(eqquad)
 
-    target = eq1**2 + eq2**2
+    # eq1 = x[1] + 2
+    # eq2 = x[2] - 2
 
-    print(target)
-    from cool_linear_solver.quadratic_problems import Quadratic_problem
+    # target = eq1**2 + eq2**2
 
-    sys = Quadratic_problem()
-    sys.add_objective(target)
-    print(sys.get_sparse_matrix())
-    sys.solve(toarray=True, verbose=2)
-    print(sys[x[1]], sys[x[2]])
+    # print(target)
+    # from cool_linear_solver.quadratic_problems import Quadratic_problem
+
+    # sys = Quadratic_problem()
+    # sys.add_objective(target)
+    # print(sys.get_sparse_matrix())
+    # sys.solve(toarray=True, verbose=2)
+    # print(sys[x[1]], sys[x[2]])
 
     # tmax = 5000
     # from cool_linear_solver.quadratic_problems import Quadratic_problem
