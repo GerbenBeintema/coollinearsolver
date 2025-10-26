@@ -5,6 +5,8 @@ from cool_linear_solver.eqs_and_vars import Linear_equation, Quadratic_equation,
 from cool_linear_solver.least_squares import Constrained_least_squares, Least_squares
 from cool_linear_solver.quadratic_problems import Quadratic_problem
 from cool_linear_solver.linear_solver import System_of_linear_eqs
+from cool_linear_solver.linear_programs import Linear_program, Mixed_integer_linear_program
+
 import numpy as np
 
 def quick_solve(list_of_eqs, **solver_kwargs):
@@ -69,7 +71,6 @@ def quick_solve(list_of_eqs, **solver_kwargs):
         sys.solve(**solver_kwargs)
         return sys
     elif len(L_obj)>=1 and len(Q_obj)==0 and len(Lq_obj)==0: #Linear program
-        from cool_linear_solver.linear_programs import Linear_program, Mixed_integer_linear_program
         if len(integers_variables) + len(binaries_variables) > 0:
             sys = Mixed_integer_linear_program()
             for var in integers_variables:
