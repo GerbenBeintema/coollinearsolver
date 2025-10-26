@@ -1,6 +1,6 @@
-from cool_linear_solver.least_squares import Constrained_least_squares
 from cool_linear_solver.linear_solver import System_of_linear_eqs
 import numpy as np
+
 class Linear_program:
     def __init__(self):
         self.objective = None
@@ -15,14 +15,14 @@ class Linear_program:
         self.set_minimization_objective(-eq)
 
     def set_minimization_objective(self, eq):
-        assert not eq.is_inequality #what about the map?
+        assert not eq.is_inequality and not eq.is_equality #what about the map?
         for id_now, value in eq.coefs.items():
             if self.map.get(id_now) is None:
                 self.map[id_now] = len(self.map)
         self.objective = eq
 
     def add_equality(self, eq):
-        assert not eq.is_inequality
+        assert eq.is_equality
         self.equality_sys.add_equation(eq)
 
     def add_inequality(self, eq):
@@ -37,9 +37,9 @@ class Linear_program:
             elif eq.is_equality:
                 self.add_equality(eq)
             else:
-                self.set_objective(eq)
+                self.set_minimization_objective(eq)
     
-    def solve(self, toarray=True, solver='osqp', verbose=False, bounds=None):
+    def solve(self, toarray=True, verbose=False, bounds=None):
         #min q x
         # st A_ub x <= b_ub
         #    A_eq x = b_eq

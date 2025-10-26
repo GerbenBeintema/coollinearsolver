@@ -58,7 +58,7 @@ class Linear_equation(object):
             coefs = defaultdict(float, [(id_now,other*value) for id_now, value in self.coefs.items()])
             return Linear_equation(coefs=coefs, constant=other*self.constant)
         else:
-            return NotImplemented
+            return NotImplementedError
 
     def __rmul__(self,other): #other*self
         return self*other
@@ -71,7 +71,7 @@ class Linear_equation(object):
         elif other==2:
             return self*self
         else:
-            return NotImplemented
+            return NotImplementedError
     
     def __eq__(self,other):
         s = self - other
