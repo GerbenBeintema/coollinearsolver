@@ -1,3 +1,4 @@
+from cool_linear_solver.eqs_and_vars import inference
 from cool_linear_solver.linear_solver import System_of_linear_eqs
 import numpy as np
 
@@ -77,11 +78,7 @@ class Linear_program:
         self.sol = self.sol_full.x
 
     def __getitem__(self, ids):
-        from collections.abc import Iterable 
-        if  isinstance(ids, Iterable):
-            return [self[id] for id in ids]
-        else:
-            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        return inference(self.sol, self.map, ids)
 
 def _extract_bounds_from_ub(A_ub, b_ub):
     bounds = [(-np.inf, np.inf)] * A_ub.shape[1]  # Initialize bounds for each variable

@@ -1,4 +1,5 @@
 
+from cool_linear_solver.eqs_and_vars import inference
 from cool_linear_solver.linear_solver import System_of_linear_eqs
 import numpy as np
 
@@ -8,6 +9,7 @@ class Quadratic_problem(object):
         self.map = self.inequality_sys.map #from id to vector index
         self.equality_sys = System_of_linear_eqs()
         self.equality_sys.map = self.map
+        self.sol = None # will be a numpy array after solving
     
     def add_objective(self, quad):
         self.quad = quad 
@@ -44,7 +46,7 @@ class Quadratic_problem(object):
             elif eq.is_equality:
                 self.add_equality(eq)
             else:
-                self.set_objective(eq)
+                self.add_objective(eq)
     
     def get_sparse_matrix(self):
         from scipy.sparse import coo_matrix, csc_matrix
@@ -87,8 +89,4 @@ class Quadratic_problem(object):
         self.sol = solve_qp(P,q,G,h,A,b,lb=lb,ub=ub,solver=solver, initvals=None, verbose=False) #add initial vals?
 
     def __getitem__(self, ids):
-        from collections.abc import Iterable 
-        if  isinstance(ids, Iterable):
-            return [self[id] for id in ids]
-        else:
-            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        return inference(self.sol, self.map, ids)

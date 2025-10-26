@@ -1,5 +1,6 @@
 
 from cool_linear_solver.linear_solver import System_of_linear_eqs
+from cool_linear_solver.eqs_and_vars import inference, Linear_squared_equation
 import numpy as np
 
 #https://scaron.info/doc/qpsolvers/least-squares.html#qpsolvers.solve_ls
@@ -13,8 +14,8 @@ class Constrained_least_squares(object):
         self.equality_sys.map = self.map
 
     def add_objective(self, eq):
-        assert not eq.is_inequality
-        self.objective_sys.add_equation(eq)
+        assert isinstance(eq, Linear_squared_equation)
+        self.objective_sys.add_equation(eq._orig_linear)
 
     def add_equality(self, eq):
         assert not eq.is_inequality
@@ -84,18 +85,15 @@ class Constrained_least_squares(object):
         assert self.sol is not None, 'optimization failed'
 
     def __getitem__(self, ids):
-        from collections.abc import Iterable 
-        if  isinstance(ids, Iterable):
-            return [self[id] for id in ids]
-        else:
-            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        return inference(self.sol, self.map, ids)
 
 class Least_squares(object):
     def __init__(self):
         self.sol_sys = System_of_linear_eqs()
 
     def add_objective(self, eq):
-        self.sol_sys.add_equation(eq)
+        assert isinstance(eq, Linear_squared_equation)
+        self.sol_sys.add_equation(eq._orig_linear)
 
     def solve(self):
         R = self.sol_sys.get_sparse_matrix()
@@ -104,4 +102,4 @@ class Least_squares(object):
         self.sol_sys.sol = solve(R.T@R, R.T@s)
 
     def __getitem__(self, ids):
-        return self.sol_sys[ids]
+        return inference(self.sol_sys.sol, self.sol_sys.map, ids)

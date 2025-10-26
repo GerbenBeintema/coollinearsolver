@@ -7,9 +7,9 @@ def run_example(verbose=1):
 
 	a = Variable(name='a')
 	b = Variable(name='b')
-	sys.add_objective(a+b)
-	sys.add_objective(a-b)
-	sys.add_objective(a+a+4)
+	sys.add_objective((a+b)**2)
+	sys.add_objective((a-b)**2)
+	sys.add_objective((a+a+4)**2)
 	sys.solve()
 	if verbose:
 		print('a',sys[a], 'b',sys[b])

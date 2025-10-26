@@ -1,5 +1,6 @@
 from scipy.sparse import coo_matrix, csc_matrix
 from scipy.sparse.linalg import spsolve as solve
+from cool_linear_solver.eqs_and_vars import inference
 
 import numpy as np
 
@@ -42,11 +43,7 @@ class System_of_linear_eqs(object):
         return csc_matrix(arg1=(self.data, (self.eqnum,self.varnum)),shape=(len(self.rhs),len(self.map)))
     
     def __getitem__(self, ids):
-        from collections.abc import Iterable 
-        if  isinstance(ids, Iterable):
-            return [self[id] for id in ids]
-        else:
-            return sum(val*self.sol[self.map[el]] for el,val in ids.coefs.items()) + ids.constant
+        return inference(self.sol, self.map, ids)
 
 if __name__=='__main__':
     from cool_linear_solver import Variable

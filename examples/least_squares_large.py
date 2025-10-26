@@ -7,9 +7,9 @@ def run_example(verbose=1):
     b = Variable(name='b')
 
     eqs = []
-    eqs.append(a+b)
-    eqs.append(a-b)
-    eqs.append(a+a+4)
+    eqs.append((a+b)**2)
+    eqs.append((a-b)**2)
+    eqs.append((a+a+4)**2)
     
     sol = quick_solve(eqs)
     if verbose:

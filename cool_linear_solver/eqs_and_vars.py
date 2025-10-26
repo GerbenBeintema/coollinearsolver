@@ -172,9 +172,10 @@ class Linear_squared_equation(Quadratic_equation):
     """
     def __init__(self, linear):
         assert isinstance(linear, Linear_equation)
+        assert not linear.is_equality and not linear.is_inequality
         # initialize Quadratic_equation fields with empty data, but keep the
         # original linear expression for lazy expansion
-        super().__init__({}, linear)
+        super().__init__({}, Linear_equation())
         self._orig_linear = linear
         self._expanded_quad = None
 
@@ -255,7 +256,21 @@ def _index_to_key(x):
     except TypeError:
         raise TypeError(f'Index {x!r} is not hashable and cannot be used for Variable indexing')
 
-
+def inference(sol, map, eq : Linear_equation):
+    from collections.abc import Iterable 
+    if  isinstance(eq, Iterable):
+        return [inference(sol, map, id_now) for id_now in eq]
+    if isinstance(eq, Linear_equation):
+        return sum(val*sol[map[el]] for el,val in eq.coefs.items()) + eq.constant
+    if isinstance(eq, Linear_squared_equation):
+        lin_val = inference(sol, map, eq._orig_linear)
+        return lin_val * lin_val
+    if isinstance(eq, Quadratic_equation):
+        lin_part = inference(sol, map, eq.linear)
+        quad_part = 0
+        for (h1, h2), value in eq.quadratic_coefs.items():
+            quad_part += value * sol[map[h1]] * sol[map[h2]]
+        return quad_part + lin_part
 
 if __name__=='__main__':
 
@@ -307,6 +322,10 @@ if __name__=='__main__':
     # mixing with other expressions also expands
     mix = S + (x[1] + 1)
     print('\nmixing S with a linear term yields:', type(mix).__name__, mix)
+
+    print('Sum usage:')
+    print('Sum linear terms: ', sum([x[0], x[1], x[2]]))
+    print('Sum squared terms: ', sum([x[0]**2, x[1]**2, x[2]**2]))
 
     # eqquad = eq*eq
     # print(eqquad)
