@@ -14,6 +14,8 @@ numpy = ">=1.25"
 matplotlib = "*"
 cloudpickle = "*"
 qpsolvers = {version = "*", extras = ["osqp"]}
+mpi = "*"
+scipy = ">=1.10"
 
 [build-system]
 requires = ["poetry-core"]

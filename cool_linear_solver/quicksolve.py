@@ -4,6 +4,7 @@ from cool_linear_solver.eqs_and_vars import Linear_equation, Quadratic_equation,
 from cool_linear_solver.least_squares import Constrained_least_squares, Least_squares
 from cool_linear_solver.quadratic_problems import Quadratic_problem
 from cool_linear_solver.linear_solver import System_of_linear_eqs
+import numpy as np
 
 def quick_solve(list_of_eqs, **solver_kwargs):
     assert len(list_of_eqs)>0
@@ -62,10 +63,10 @@ def quick_solve(list_of_eqs, **solver_kwargs):
             sys.add_equality(eq)
         sys.solve(**solver_kwargs)
         return sys
-    elif len(L_obj)==1 and len(Q_obj)==0 and len(Lq_obj)==0: #Linear program
+    elif len(L_obj)>=1 and len(Q_obj)==0 and len(Lq_obj)==0: #Linear program
         from cool_linear_solver.linear_programs import Linear_program
         sys = Linear_program()
-        sys.set_minimization_objective(L_obj[0])
+        sys.set_minimization_objective(sum(L_obj))
         for eq in L_ieq:
             sys.add_inequality(eq)
         for eq in L_eq:
@@ -102,6 +103,8 @@ def _test_quicksolve(verbose=1):
         print('variables:', [x[0], x[1], x[2]])
         print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
         print('equation evaluations:', [sys[e] for e in eqs])
+    assert all(abs(sys[e])<1e-6 for e in eqs), 'System of equations not satisfied'
+    _validate_quicksolve(sys, eqs)
 
     eqs = [(x[0] + x[1] + 2*x[2]+2)**2,
             (3*x[0] + x[1] + 0.5*x[2]+2)**2,
@@ -114,6 +117,10 @@ def _test_quicksolve(verbose=1):
         print('variables:', [x[0], x[1], x[2]])
         print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
         print('equation residuals:', [sys[e] for e in eqs])
+    _validate_quicksolve(sys, eqs)
+    R = sys.sol_sys.get_sparse_matrix()
+    s = sys.sol_sys.rhs
+    assert np.allclose(R.T@(R @ sys.sol_sys.sol - s), 0), 'Least squares solution does not minimize the residuals'
 
     eqs = [x[0] + x[1] + x[2], x[0] + 2*x[1] + 3*x[2]==4, x[1]+x[2]>=1, x[0]>=0, x[1]>=0, x[2]>=0, x[0]<=10, x[1]<=10, x[2]<=10]
     sys = quick_solve(eqs)
@@ -123,6 +130,7 @@ def _test_quicksolve(verbose=1):
         print('variables:', [x[0], x[1], x[2]])
         print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
         print('equation evaluations:', [sys[e] for e in eqs])
+    _validate_quicksolve(sys, eqs)
     
     for toarray in (True, False):
         print(f'\n--- toarray={toarray} ---')
@@ -137,6 +145,7 @@ def _test_quicksolve(verbose=1):
             print('variables:', [x[0], x[1], x[2]])
             print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
             print('equation evaluations:', [sys[e] for e in eqs])
+        _validate_quicksolve(sys, eqs)
 
         eqs = [x[0]*x[0]+x[1]*x[1]+x[2]*x[2]+x[1]+x[2], x[0]+x[1]+x[2]==1]
         sys = quick_solve(eqs, toarray=toarray)
@@ -145,6 +154,7 @@ def _test_quicksolve(verbose=1):
             print(f'solver: {type(sys).__name__}')
             print('variables:', [x[0], x[1], x[2]])
             print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
+        _validate_quicksolve(sys, eqs)
 
 if __name__=='__main__':
     _test_quicksolve()
