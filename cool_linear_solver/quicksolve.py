@@ -62,6 +62,16 @@ def quick_solve(list_of_eqs, **solver_kwargs):
             sys.add_equality(eq)
         sys.solve(**solver_kwargs)
         return sys
+    elif len(L_obj)==1 and len(Q_obj)==0 and len(Lq_obj)==0: #Linear program
+        from cool_linear_solver.linear_programs import Linear_program
+        sys = Linear_program()
+        sys.set_minimization_objective(L_obj[0])
+        for eq in L_ieq:
+            sys.add_inequality(eq)
+        for eq in L_eq:
+            sys.add_equality(eq)
+        sys.solve(**solver_kwargs)
+        return sys
     else:
         raise ValueError(f'Cannot find solver for len(Q_obj)={len(Q_obj)}, len(L_ieq)={len(L_ieq)}, len(L_obj)={len(L_obj)}, len(L_eq)=={len(L_eq)}')
 
@@ -104,6 +114,15 @@ def _test_quicksolve(verbose=1):
         print('variables:', [x[0], x[1], x[2]])
         print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
         print('equation residuals:', [sys[e] for e in eqs])
+
+    eqs = [x[0] + x[1] + x[2], x[0] + 2*x[1] + 3*x[2]==4, x[1]+x[2]>=1, x[0]>=0, x[1]>=0, x[2]>=0, x[0]<=10, x[1]<=10, x[2]<=10]
+    sys = quick_solve(eqs)
+    if verbose:
+        print('\n=== Linear Program ===')
+        print(f'solver: {type(sys).__name__}')
+        print('variables:', [x[0], x[1], x[2]])
+        print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
+        print('equation evaluations:', [sys[e] for e in eqs])
     
     for toarray in (True, False):
         print(f'\n--- toarray={toarray} ---')
