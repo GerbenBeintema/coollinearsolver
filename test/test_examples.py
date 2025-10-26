@@ -17,6 +17,7 @@ EXAMPLES = [
     'examples.system_of_eqs_large',
     'examples.facility_location_mip',
     'examples.mixed_integer_program',
+    'examples.traveling_salesman_mip',
 ]
 
 

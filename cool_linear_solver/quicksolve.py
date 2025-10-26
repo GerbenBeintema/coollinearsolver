@@ -34,7 +34,8 @@ def quick_solve(list_of_eqs, **solver_kwargs):
             binaries_variables.append(eq)
         else:
             raise ValueError(f'{eq} is not an Quadratic or Linear equation')
-    print(f'quick_solve detected: {len(Q_obj)} Quadratic objectives, {len(L_ieq)} Linear inequalities, {len(Lq_obj)} Linear squared objectives, {len(L_obj)} Linear objectives, {len(L_eq)} Linear equalities, {len(integers_variables)} Integer variables, {len(binaries_variables)} Binary variables')
+    if solver_kwargs.get('verbose', 0):
+        print(f'quick_solve detected: {len(Q_obj)} Quadratic objectives, {len(L_ieq)} Linear inequalities, {len(Lq_obj)} Linear squared objectives, {len(L_obj)} Linear objectives, {len(L_eq)} Linear equalities, {len(integers_variables)} Integer variables, {len(binaries_variables)} Binary variables')
     assert bool(Q_obj) + bool(L_obj) + bool(Lq_obj) <= 1, 'only one type of objective allowed'
 
     if len(Q_obj)==0 and len(L_ieq)==0 and len(L_obj)==0 and len(Lq_obj)==0 and len(L_eq)>0 and len(integers_variables)==0 and len(binaries_variables)==0: #Linear system of equations
