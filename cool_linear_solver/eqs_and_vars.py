@@ -64,14 +64,14 @@ class Linear_equation(object):
         return self*other
     def __truediv__(self,other): #self/other
         return self*(1/other)
-    
+
     def __pow__(self, other):
         if other==1:
             return self
         elif other==2:
-            return self*self
+            return Linear_squared_equation(self)
         else:
-            return NotImplementedError
+            raise NotImplementedError
     
     def __eq__(self,other):
         s = self - other
@@ -90,7 +90,7 @@ class Linear_equation(object):
 
     def __repr__(self):
         S = ' + '.join([f'{el:.3}*' + global_back_hash[h] for h,el in self.coefs.items()])
-        S = S.replace('+ -','- ').replace('1.0*','').replace('[]','') #+ f' == {-self.constant:.3f}'
+        S = S.replace('+ -','- ').replace('1.0*','').replace('[]','')
         if self.is_equality:
             return S + f' == {-self.constant:.3f}'
         elif self.is_inequality:
@@ -102,6 +102,7 @@ class Linear_equation(object):
                 return S + f' + {self.constant:.3f}'
             else:
                 return S + f'{self.constant:.3f}'
+
 
 class Quadratic_equation:
     def __init__(self, quadratic_coefs, linear):
@@ -161,6 +162,46 @@ class Quadratic_equation:
     def __truediv__(self,other): #self/other
         return self*(1/other)
     
+class Linear_squared_equation(Quadratic_equation):
+    """Lazy (linear_expr)**2 that expands to a Quadratic_equation on demand.
+
+    Minimal implementation: stores the original linear expression and an
+    expanded cached Quadratic_equation produced on first use via _expand().
+    Special methods are delegated to the expanded quadratic to keep this
+    class compact (see delegation below).
+    """
+    def __init__(self, linear):
+        assert isinstance(linear, Linear_equation)
+        # initialize Quadratic_equation fields with empty data, but keep the
+        # original linear expression for lazy expansion
+        super().__init__({}, linear)
+        self._orig_linear = linear
+        self._expanded_quad = None
+
+    def _expand(self):
+        if self._expanded_quad is None:
+            # build full quadratic once and cache it
+            self._expanded_quad = self._orig_linear * self._orig_linear
+        return self._expanded_quad
+
+    def __repr__(self):
+        if self._expanded_quad is None:
+            return f'({self._orig_linear})^2'
+        return self._expanded_quad.__repr__()
+
+# Attach simple delegators for common special methods to keep the class small.
+for _name in ('__add__','__radd__','__sub__','__rsub__','__neg__',
+              '__mul__','__rmul__','__truediv__','__pow__','__eq__','__le__','__ge__'):
+    def _make(name):
+        def _method(self, *a, **k):
+            target = self._expand()
+            # if other is also lazy, expand it first
+            if a and isinstance(a[0], Linear_squared_equation):
+                a = (a[0]._expand(),) + a[1:]
+            return getattr(target, name)(*a, **k)
+        return _method
+    setattr(Linear_squared_equation, _name, _make(_name))
+
 class Variable(Linear_equation):
     def __init__(self,name=None):
         self.id_base = random.randint(0,10**10)
@@ -247,12 +288,25 @@ if __name__=='__main__':
 
 
     x = Variable('x')
-    eq = x[1]+x[2]+2
-    print(eq)
-    eq = x['a'] + x['b']
-    print(eq)
-    eq = x['a', 1] + x['b', 2.5]
-    print(eq)
+    # simple linear expressions
+    L = x[1] + x[2] + 2
+    print('linear L =', L)
+
+    # lazy squared expression: does not expand immediately
+    S = L**2
+    print('lazy squared S =', S)
+    print('S type before expansion:', type(S).__name__)
+
+    # performing an operation that requires the full quadratic form triggers expansion
+    Q = S + S  # forces expansion into a Quadratic_equation
+
+    print('\nafter expansion:')
+    print('Q type:', type(Q).__name__)
+    print('Q repr:', Q)
+
+    # mixing with other expressions also expands
+    mix = S + (x[1] + 1)
+    print('\nmixing S with a linear term yields:', type(mix).__name__, mix)
 
     # eqquad = eq*eq
     # print(eqquad)
