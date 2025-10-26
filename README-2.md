@@ -1,6 +1,6 @@
 # cool_linear_solver
  
-An easy going API to solver (see below) with user minimal effort
+An easy going (contrained) linear solver with sparse methods and minimal effort
 
 ## Installation
 
