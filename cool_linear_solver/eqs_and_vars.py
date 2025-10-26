@@ -74,6 +74,9 @@ class Linear_equation(object):
             raise NotImplementedError
     
     def __eq__(self,other):
+        if other == Integer:
+            assert len(self.coefs)==1 and list(self.coefs.values())[0]==1.0 and self.constant==0.0, 'Integer can only be applied to single variable expressions'
+            return Integer(list(self.coefs.keys())[0])
         s = self - other
         s.is_equality = True
         return s
@@ -226,7 +229,6 @@ class Variable(Linear_equation):
             global_back_hash[h] = f'{self.name}[{x}]'.replace('(', '').replace(')', '')
         return Linear_equation(coefs=[(h, 1.)], constant=0.)
 
-
 def _index_to_key(x):
     """Convert an indexing value x into an internal hashable key.
 
@@ -272,6 +274,13 @@ def inference(sol, map, eq : Linear_equation):
             quad_part += value * sol[map[h1]] * sol[map[h2]]
         return quad_part + lin_part
 
+class Integer():
+    def __init__(self, h):
+        self.h = h
+    
+    def __repr__(self):
+        return f'{global_back_hash[self.h]} == Integer'
+
 if __name__=='__main__':
 
     # x = Variable('x')
@@ -301,31 +310,34 @@ if __name__=='__main__':
 
     # print((x**2 + y**2 - (x-y)+2)*2.0)
 
-
     x = Variable('x')
-    # simple linear expressions
-    L = x[1] + x[2] + 2
-    print('linear L =', L)
+    r = Integer == x[1]
+    print(r)
 
-    # lazy squared expression: does not expand immediately
-    S = L**2
-    print('lazy squared S =', S)
-    print('S type before expansion:', type(S).__name__)
+    # x = Variable('x')
+    # # simple linear expressions
+    # L = x[1] + x[2] + 2
+    # print('linear L =', L)
 
-    # performing an operation that requires the full quadratic form triggers expansion
-    Q = S + S  # forces expansion into a Quadratic_equation
+    # # lazy squared expression: does not expand immediately
+    # S = L**2
+    # print('lazy squared S =', S)
+    # print('S type before expansion:', type(S).__name__)
 
-    print('\nafter expansion:')
-    print('Q type:', type(Q).__name__)
-    print('Q repr:', Q)
+    # # performing an operation that requires the full quadratic form triggers expansion
+    # Q = S + S  # forces expansion into a Quadratic_equation
 
-    # mixing with other expressions also expands
-    mix = S + (x[1] + 1)
-    print('\nmixing S with a linear term yields:', type(mix).__name__, mix)
+    # print('\nafter expansion:')
+    # print('Q type:', type(Q).__name__)
+    # print('Q repr:', Q)
 
-    print('Sum usage:')
-    print('Sum linear terms: ', sum([x[0], x[1], x[2]]))
-    print('Sum squared terms: ', sum([x[0]**2, x[1]**2, x[2]**2]))
+    # # mixing with other expressions also expands
+    # mix = S + (x[1] + 1)
+    # print('\nmixing S with a linear term yields:', type(mix).__name__, mix)
+
+    # print('Sum usage:')
+    # print('Sum linear terms: ', sum([x[0], x[1], x[2]]))
+    # print('Sum squared terms: ', sum([x[0]**2, x[1]**2, x[2]**2]))
 
     # eqquad = eq*eq
     # print(eqquad)

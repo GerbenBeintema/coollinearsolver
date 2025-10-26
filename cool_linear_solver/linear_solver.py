@@ -11,12 +11,14 @@ class System_of_linear_eqs(object):
         self.eqnum = []
         self.varnum = []
         self.rhs = []
+        self.eqs = []
     
     @property
     def neqs(self):
         return len(self.rhs)
 
     def add_equation(self,eq):
+        self.eqs.append(eq)
         for id_now, value in eq.coefs.items():
             if self.map.get(id_now) is None:
                 self.map[id_now] = len(self.map)
