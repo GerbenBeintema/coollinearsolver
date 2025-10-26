@@ -1,4 +1,4 @@
-from cool_linear_solver.eqs_and_vars import inference, Integer
+from cool_linear_solver.eqs_and_vars import inference, Integer, Binary
 from cool_linear_solver.linear_solver import System_of_linear_eqs
 import numpy as np
 
@@ -114,7 +114,6 @@ def _extract_bounds_from_ub(A_ub, b_ub):
     bounds = [(None if lb == -np.inf else lb, None if ub == np.inf else ub) for lb, ub in bounds]
     return bounds
 
-from mip import Model, xsum, MINIMIZE, BINARY, INTEGER
 class Mixed_integer_linear_program:
     def __init__(self):
         self.objective = None
@@ -123,6 +122,7 @@ class Mixed_integer_linear_program:
         self.equality_sys = System_of_linear_eqs()
         self.equality_sys.map = self.map
         self.integer_vars = []
+        self.binary_vars = []
     
     def set_maximization_objective(self, eq):
         self.set_minimization_objective(-eq)
@@ -144,26 +144,49 @@ class Mixed_integer_linear_program:
         self.inequality_sys.add_equation(eq)
     
     def add_integer(self, var): #var is the id
+        # Accept Integer marker or a variable expression (x[i] or x[i] == Integer)
         if isinstance(var, Integer):
-            var = var.h
+            h = var.h
         else:
-            var = var == Integer
-            var = var.h
-        
-        if self.map.get(var) is None:
-            self.map[var] = len(self.map)
-        self.integer_vars.append(var)
+            # var is likely a Linear_equation like x[i]; coerce to Integer marker
+            h = (var == Integer).h
+
+        if self.map.get(h) is None:
+            self.map[h] = len(self.map)
+        self.integer_vars.append(h)
+
+    def add_binary(self, var):
+        if isinstance(var, Binary):
+            h = var.h
+        else:
+            h = (var == Binary).h
+
+        if self.map.get(h) is None:
+            self.map[h] = len(self.map)
+        self.binary_vars.append(h)
     
     def solve(self, bounds=None, verbose=False):
         A_ub = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs>0 else None #number of cols is len of map
         b_ub = np.array(self.inequality_sys.rhs, dtype=np.float64)                 if self.inequality_sys.neqs>0 else None
         bounds = _extract_bounds_from_ub(A_ub, b_ub) if bounds is None else bounds
 
-        from mip import Model, xsum, MINIMIZE, BINARY, INTEGER, CONTINUOUS, OptimizationStatus
+        from mip import Model, xsum, MINIMIZE, BINARY, INTEGER, CONTINUOUS, OptimizationStatus, INF
         m = Model()
         m.verbose = 1 if verbose else 0
-        x = [m.add_var(var_type=INTEGER if var in self.integer_vars else CONTINUOUS, \
-                       lb=bounds[id_now][0], ub=bounds[id_now][1]) for var, id_now in self.map.items()]
+        # if a var is binary and the lower bound is None than replace it with 0 
+        for i, var in enumerate(self.map):
+            if var in self.binary_vars and bounds[i][0] is None:
+                bounds[i] = (0, bounds[i][1])
+        # bounds processing needed here, replace None -> -INF/INF
+        bounds = [(-INF if b[0] is None else b[0], INF if b[1] is None else b[1]) for b in bounds]
+        x = [
+            m.add_var(
+                var_type=(BINARY if var in self.binary_vars else (INTEGER if var in self.integer_vars else CONTINUOUS)),
+                lb=bounds[id_now][0],
+                ub=bounds[id_now][1],
+            )
+            for var, id_now in self.map.items()
+        ]
         m.objective = xsum([self.objective.coefs[id_now]*x[self.map[id_now]] for id_now in self.objective.coefs])
         for eq in self.inequality_sys.eqs:
             m += xsum([eq.coefs[id_now]*x[self.map[id_now]] for id_now in eq.coefs]) <= -eq.constant
@@ -213,13 +236,13 @@ if __name__=='__main__':
     x = Variable('x')
     sys = Mixed_integer_linear_program()
     sys.set_minimization_objective(4*x[0] + 5*x[1] + 6*x[2])
-    sys.add_integer(x[0])
-    sys.add_integer(x[1])
+    sys.add_binary(x[0])
+    sys.add_binary(x[1])
     sys.add_inequality(x[0] >= 0)
     sys.add_inequality(x[1] >= 0)
     sys.add_inequality(x[2] >= 0)
-    sys.add_inequality(x[0] <= 10)
-    sys.add_inequality(x[1] <= 10)
+    sys.add_inequality(x[0] <= 1)
+    sys.add_inequality(x[1] <= 1)
     sys.add_inequality(x[2] <= 10)
 
     sys.add_inequality(x[0] - x[1] <= 11)

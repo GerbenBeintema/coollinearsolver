@@ -74,9 +74,11 @@ class Linear_equation(object):
             raise NotImplementedError
     
     def __eq__(self,other):
-        if other is Integer:
-            assert len(self.coefs)==1 and list(self.coefs.values())[0]==1.0 and self.constant==0.0, 'Integer can only be applied to single variable expressions'
-            return Integer(list(self.coefs.keys())[0])
+        # allow both Integer and Binary markers (e.g. x[0] == Integer or x[0] == Binary)
+        if other is Integer or other is Binary:
+            assert len(self.coefs)==1 and list(self.coefs.values())[0]==1.0 and self.constant==0.0, 'Integer/Binary can only be applied to single variable expressions'
+            h = list(self.coefs.keys())[0]
+            return Integer(h) if other is Integer else Binary(h)
         s = self - other
         s.is_equality = True
         return s
@@ -273,7 +275,7 @@ def inference(sol, map, eq : Linear_equation):
         for (h1, h2), value in eq.quadratic_coefs.items():
             quad_part += value * sol[map[h1]] * sol[map[h2]]
         return quad_part + lin_part
-    if isinstance(eq, Integer):
+    if isinstance(eq, Integer) or isinstance(eq, Binary):
         v = sol[map[eq.h]]
         return v - round(v)
 
@@ -283,6 +285,14 @@ class Integer():
     
     def __repr__(self):
         return f'{global_back_hash[self.h]} == Integer'
+
+
+class Binary():
+    def __init__(self, h):
+        self.h = h
+
+    def __repr__(self):
+        return f'{global_back_hash[self.h]} == Binary'
 
 if __name__=='__main__':
 

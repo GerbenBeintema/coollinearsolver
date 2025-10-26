@@ -1,4 +1,4 @@
-from cool_linear_solver import Variable, Integer, quick_solve
+from cool_linear_solver import Variable, Integer, quick_solve, Binary
 
 
 def run_example(verbose=1):
@@ -49,14 +49,10 @@ def run_example(verbose=1):
 
     # assignment implies facility open; and enforce binary domain via 0<=var<=1 and Integer marker
     for j in range(num_facilities):
-        eqs.append(y[j] >= 0)
-        eqs.append(y[j] <= 1)
-        eqs.append(y[j] == Integer)
+        eqs.append(y[j] == Binary)
     for i in range(num_customers):
         for j in range(num_facilities):
-            eqs.append(x[i, j] >= 0)
-            eqs.append(x[i, j] <= 1)
-            eqs.append(x[i, j] == Integer)
+            eqs.append(x[i, j] == Binary)
             eqs.append(x[i, j] <= y[j])
 
     sol = quick_solve(eqs, verbose=0)
