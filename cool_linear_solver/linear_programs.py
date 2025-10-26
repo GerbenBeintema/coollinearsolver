@@ -161,6 +161,7 @@ class Mixed_integer_linear_program:
 
         from mip import Model, xsum, MINIMIZE, BINARY, INTEGER, CONTINUOUS, OptimizationStatus
         m = Model()
+        m.verbose = 1 if verbose else 0
         x = [m.add_var(var_type=INTEGER if var in self.integer_vars else CONTINUOUS, \
                        lb=bounds[id_now][0], ub=bounds[id_now][1]) for var, id_now in self.map.items()]
         m.objective = xsum([self.objective.coefs[id_now]*x[self.map[id_now]] for id_now in self.objective.coefs])

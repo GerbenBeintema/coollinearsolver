@@ -74,7 +74,7 @@ class Linear_equation(object):
             raise NotImplementedError
     
     def __eq__(self,other):
-        if other == Integer:
+        if other is Integer:
             assert len(self.coefs)==1 and list(self.coefs.values())[0]==1.0 and self.constant==0.0, 'Integer can only be applied to single variable expressions'
             return Integer(list(self.coefs.keys())[0])
         s = self - other
@@ -273,6 +273,9 @@ def inference(sol, map, eq : Linear_equation):
         for (h1, h2), value in eq.quadratic_coefs.items():
             quad_part += value * sol[map[h1]] * sol[map[h2]]
         return quad_part + lin_part
+    if isinstance(eq, Integer):
+        v = sol[map[eq.h]]
+        return v - round(v)
 
 class Integer():
     def __init__(self, h):

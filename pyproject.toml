@@ -1,7 +1,7 @@
 
 [tool.poetry]
 name = "cool_linear_solver"
-version = "0.1.8"
+version = "0.1.9"
 description = "An easy going (contrained) linear solver with sparse methods and minimal effort"
 authors = ["Gerben I. Beintema"]
 license = "BSD 3-Clause License"

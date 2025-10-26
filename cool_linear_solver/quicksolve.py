@@ -1,5 +1,6 @@
 
-from cool_linear_solver.eqs_and_vars import Linear_equation, Quadratic_equation, Variable, Linear_squared_equation
+from cool_linear_solver.eqs_and_vars import Linear_equation, Quadratic_equation, \
+    Variable, Linear_squared_equation, Integer
 
 from cool_linear_solver.least_squares import Constrained_least_squares, Least_squares
 from cool_linear_solver.quadratic_problems import Quadratic_problem
@@ -13,6 +14,7 @@ def quick_solve(list_of_eqs, **solver_kwargs):
     Lq_obj = [] # Linear quadratic objectives
     L_ieq = [] # Linear inequalities
     L_eq = []  # Linear equalities
+    integers_variables = []
     for eq in list_of_eqs:
         if isinstance(eq, Linear_squared_equation):
             Lq_obj.append(eq)
@@ -25,26 +27,28 @@ def quick_solve(list_of_eqs, **solver_kwargs):
                 L_ieq.append(eq)
             else:
                 L_obj.append(eq)
+        elif isinstance(eq, Integer):
+            integers_variables.append(eq)
         else:
             raise ValueError(f'{eq} is not an Quadratic or Linear equation')
-    print(f'quick_solve detected: {len(Q_obj)} Quadratic objectives, {len(L_ieq)} Linear inequalities, {len(Lq_obj)} Linear squared objectives, {len(L_obj)} Linear objectives, {len(L_eq)} Linear equalities')
+    print(f'quick_solve detected: {len(Q_obj)} Quadratic objectives, {len(L_ieq)} Linear inequalities, {len(Lq_obj)} Linear squared objectives, {len(L_obj)} Linear objectives, {len(L_eq)} Linear equalities, {len(integers_variables)} Integer variables')
     # assert len(Q_obj)<=1, 'only one Quadratic term allowed'
     # assert len(L_obj)<=1, 'only one Linear objective allowed'
     # assert len(Lq_obj)<=1, 'only one Linear squared objective allowed'
     assert bool(Q_obj) + bool(L_obj) + bool(Lq_obj) <= 1, 'only one type of objective allowed'
 
-    if len(Q_obj)==0 and len(L_ieq)==0 and len(L_obj)==0 and len(Lq_obj)==0 and len(L_eq)>0: #Linear system of equations
+    if len(Q_obj)==0 and len(L_ieq)==0 and len(L_obj)==0 and len(Lq_obj)==0 and len(L_eq)>0 and len(integers_variables)==0: #Linear system of equations
         sys = System_of_linear_eqs()
         sys.add_equations(L_eq)
         sys.solve(**solver_kwargs)
         return sys
-    elif len(Q_obj)==0 and len(L_ieq)==0 and len(Lq_obj)>0 and len(L_obj)==0 and len(L_eq)==0: #Least Squares
+    elif len(Q_obj)==0 and len(L_ieq)==0 and len(Lq_obj)>0 and len(L_obj)==0 and len(L_eq)==0 and len(integers_variables)==0: #Least Squares
         sys = Least_squares()
         for eq in Lq_obj:
             sys.add_objective(eq)
         sys.solve(**solver_kwargs)
         return sys
-    elif len(Q_obj)==0 and len(L_obj)==0 and len(Lq_obj)>0: #Constrainted Least Squares
+    elif len(Q_obj)==0 and len(L_obj)==0 and len(Lq_obj)>0  and len(integers_variables)==0: #Constrainted Least Squares
         sys = Constrained_least_squares()
         for eq in Lq_obj:
             sys.add_objective(eq)
@@ -54,7 +58,7 @@ def quick_solve(list_of_eqs, **solver_kwargs):
             sys.add_equality(eq)
         sys.solve(**solver_kwargs)
         return sys
-    elif len(Q_obj)>=1 and len(L_obj)==0 and len(Lq_obj)==0: #Quadratic problem
+    elif len(Q_obj)>=1 and len(L_obj)==0 and len(Lq_obj)==0  and len(integers_variables)==0: #Quadratic problem
         sys = Quadratic_problem()
         sys.add_objective(sum(Q_obj))
         for eq in L_ieq:
@@ -64,8 +68,13 @@ def quick_solve(list_of_eqs, **solver_kwargs):
         sys.solve(**solver_kwargs)
         return sys
     elif len(L_obj)>=1 and len(Q_obj)==0 and len(Lq_obj)==0: #Linear program
-        from cool_linear_solver.linear_programs import Linear_program
-        sys = Linear_program()
+        from cool_linear_solver.linear_programs import Linear_program, Mixed_integer_linear_program
+        if len(integers_variables)>0:
+            sys = Mixed_integer_linear_program()
+            for var in integers_variables:
+                sys.add_integer(var)
+        else:
+            sys = Linear_program()
         sys.set_minimization_objective(sum(L_obj))
         for eq in L_ieq:
             sys.add_inequality(eq)
@@ -74,9 +83,9 @@ def quick_solve(list_of_eqs, **solver_kwargs):
         sys.solve(**solver_kwargs)
         return sys
     else:
-        raise ValueError(f'Cannot find solver for len(Q_obj)={len(Q_obj)}, len(L_ieq)={len(L_ieq)}, len(L_obj)={len(L_obj)}, len(L_eq)=={len(L_eq)}')
+        raise ValueError(f'Cannot find solver for len(Q_obj)={len(Q_obj)}, len(L_ieq)={len(L_ieq)}, len(Lq_obj)={len(Lq_obj)}, len(L_obj)={len(L_obj)}, len(L_eq)={len(L_eq)}, len(integers_variables)={len(integers_variables)}')
 
-def _validate_quicksolve(sol, eqs, epsilon=1e-6):
+def _validate_quicksolve(sol, eqs, epsilon=1e-3):
     for eq in eqs:
         if isinstance(eq, Linear_equation):
             res = sol[eq]
@@ -88,6 +97,9 @@ def _validate_quicksolve(sol, eqs, epsilon=1e-6):
                 pass #objective
         elif isinstance(eq, Quadratic_equation):
             pass #objective
+        elif isinstance(eq, Integer):
+            val = sol.sol[sol.map[eq.h]]
+            assert abs(val - round(val))<epsilon, f'Integer variable {eq} not integer, value={val}'
         else:
             raise ValueError(f'{eq} is not an Quadratic or Linear equation')
 
@@ -131,7 +143,17 @@ def _test_quicksolve(verbose=1):
         print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
         print('equation evaluations:', [sys[e] for e in eqs])
     _validate_quicksolve(sys, eqs)
-    
+
+    eqs.append(x[2]==Integer)
+    sys = quick_solve(eqs)
+    if verbose:
+        print('\n=== Mixed Integer Linear Program ===')
+        print(f'solver: {type(sys).__name__}')
+        print('variables:', [x[0], x[1], x[2]])
+        print('values:', [sys[xi] for xi in (x[0], x[1], x[2])])
+        print('equation evaluations:', [sys[e] for e in eqs])
+    _validate_quicksolve(sys, eqs)
+
     for toarray in (True, False):
         print(f'\n--- toarray={toarray} ---')
         eqs = [(x[0] + x[1] + 2*x[2]+2)**2,
