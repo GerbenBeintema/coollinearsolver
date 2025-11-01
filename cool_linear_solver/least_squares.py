@@ -25,20 +25,19 @@ class Constrained_least_squares(object):
         assert eq.is_inequality
         self.inequality_sys.add_equation(eq)
 
-    def solve(self, toarray=False, solver='osqp', verbose=False, W=None, lb=None, ub=None):
+    def solve(self, toarray=False, solver='osqp', verbose=False, W=None, lb=None, ub=None, **solver_kwargs):
         #min 1/2 |(R x - s)|^2_W
         # st G x <= h
         #    A x = b
         from qpsolvers import solve_qp
         from scipy.sparse import csc_matrix, issparse
-        import numpy as _np
 
         R = self.objective_sys.get_sparse_matrix()
-        s = _np.array(self.objective_sys.rhs, dtype=_np.float64)
+        s = np.array(self.objective_sys.rhs, dtype=np.float64)
         G = self.inequality_sys.get_sparse_matrix() if self.inequality_sys.neqs > 0 else None
-        h = None if G is None else _np.array(self.inequality_sys.rhs, dtype=_np.float64)
+        h = None if G is None else np.array(self.inequality_sys.rhs, dtype=np.float64)
         A = self.equality_sys.get_sparse_matrix() if self.equality_sys.neqs > 0 else None
-        b = None if A is None else _np.array(self.equality_sys.rhs, dtype=_np.float64)
+        b = None if A is None else np.array(self.equality_sys.rhs, dtype=np.float64)
 
         if toarray:
             # allow user to inspect dense intermediates, but we'll still pass CSC to the solver
@@ -68,9 +67,9 @@ class Constrained_least_squares(object):
         q = -2 * (R.T @ s)
 
         # coerce vectors and sparse matrices to solver-friendly types
-        q = _np.asarray(q, dtype=_np.float64)
-        h = None if h is None else _np.asarray(h, dtype=_np.float64)
-        b = None if b is None else _np.asarray(b, dtype=_np.float64)
+        q = np.asarray(q, dtype=np.float64)
+        h = None if h is None else np.asarray(h, dtype=np.float64)
+        b = None if b is None else np.asarray(b, dtype=np.float64)
 
         def _as_csc(M):
             if M is None:
@@ -81,7 +80,10 @@ class Constrained_least_squares(object):
         G = _as_csc(G)
         A = _as_csc(A)
 
-        self.sol = solve_qp(P, q, G, h, A, b, lb=lb, ub=ub, solver=solver, initvals=None, verbose=False)
+        if solver == 'osqp' and solver_kwargs.get('polish', None) is None:
+            solver_kwargs['polish'] = True
+
+        self.sol = solve_qp(P, q, G, h, A, b, lb=lb, ub=ub, solver=solver, initvals=None, verbose=verbose>0, **solver_kwargs)
         assert self.sol is not None, 'optimization failed'
 
     def __getitem__(self, ids):
